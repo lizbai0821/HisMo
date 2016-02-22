@@ -1,0 +1,29 @@
+set term postscript eps enhanced lw 4 font "Times-Roman, 24"
+set output "Update_runtime_overview.eps"
+set key inside left top horizontal Left reverse nobox notitle
+#set style data points
+set style histogram clustered 
+
+set style data histograms
+set xlabel 'Partition Option' offset 0, 0.5
+set ylabel 'Execution Time (ms)' offset 2.0,0
+set xrange [0.5:1.1]
+set xtics 0.6,0.1,1
+#set xtics("Q_1"1, "Q_2"2, "Q_3"3, "Q_4"4)
+
+#set xtics 0,40,230
+set yrange [0:0.3]
+set ytics 0,0.1,0.2
+#set ytics -4,3,8
+#set logscale y
+#unset key
+#set ytics 0,1000,6000 offset 0.3,0
+
+#set format y "%.1f"
+
+#plot "0" u 1:2 pt 6 ps 2 lc -1 title "{Delta = 0}", "4_Query2" u 1:2 pt 7 ps 2 lc -1 title"{Q_2}", "4_Query3" u 1:2 pt 10 ps 2 lc -1 title "{Q_3}", "4_Query4" u 1:2 pt 11 ps 2 lc -1 title "{Q_4}"
+#plot "DATA_overview" u 1:2 pt 67 ps 2 lc -1, "DATA_overview" u 1:3 pt 13 ps 2 lc 1
+#, "SimilarDegree" u 1:2 pt 10 ps 1 lc 1, "Top-m" u 1:2 pt 12 ps 1 lc 2
+#set term wxt
+plot "0" using ($1-0.032):($2):(0.016)  with boxes fs pattern 1 ls 1 title "{Delta = 0}", "0.05" using ($1-0.016):($2):(0.016)  with boxes fs pattern 5 ls 1 title "{Delta = 0.05}", "0.1" using ($1):($2):(0.016)  with boxes fs pattern 3 ls 1 title "{Delta = 0.1}", "0.2" using ($1+0.016):($2):(0.016)  with boxes fs pattern 4 ls 1 title "{Delta = 0.2}", "0.5" using ($1+0.032):($2):(0.016)  with boxes fs pattern 2 ls 1 title "{Delta = 0.5}"
+#plot "DATA_overview" using 2:xtic(1) ti col, '' u 3 ti col
