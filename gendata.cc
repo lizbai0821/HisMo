@@ -34,7 +34,7 @@ const float Sentinel=-DBL_MAX;
 clock_t t0, t1, t2, t3, t4;
 
 #define PATH "/Users/lizbai/Downloads/DataSett"
-//#define FILENAME "Random"
+#define FILENAME "Overview"
 
 
 typedef pair<int,float> lvalue; //for candidate streaks ending at position k
@@ -1008,23 +1008,23 @@ void read_real_data(char* rawfn,Entry** dataAry,int& data_size) {
 
 
 int main(int argc, char* argv[]) {
-	if(argc!=4){
+	if(argc!=2){
 		cout<<"error"<<endl;
 		return 0;
 	}
 
-	opt=atoi(argv[1]); //query type
-	delta=atof(argv[2]);
-	int choice = atoi(argv[3]);//baseline or optimized 
+	//delta=atof(argv[2]);
+	int choice = atoi(argv[1]);//baseline or optimized 
 	/*
 	part=float(atof(argv[3])); //dataset-partition to run 
 	sim_degree=atof(argv[4]);
 	topk_option=atof(argv[5]);
 	*/
-	//part = 1;
-	opt = 1;
+	part = 1; // pre-calculated part
+	opt = 1; //query type
 	sim_degree = 0.8;
 	topk_option = 3;
+	delta = 0; // update part
 	//blk_len=4096;
 	blk_len=1024;	// default: 1 K page size (better for join)
 
@@ -1039,21 +1039,27 @@ int main(int argc, char* argv[]) {
     catch(const char *str)  
     {printf("failed open dir");} 
 
-    //if(pdir)
-    {
-    	//ofstream fout(FILENAME);//for overview... position
-    	//fout<<23<<" Optimized Optimized"<<endl; 
-    	//while((pdirent = readdir(pdir)))
+    if(pdir)
+    {    	
+    	ofstream fout(FILENAME);//for overview... position
+    	if(choice ==1)
+    	{
+    		fout<<"Overview\tOptimized\tOptimized"<<endl; //
+    	}
+    	else
+    	{
+    		fout<<"Overview\tBaseline\tBaseline"<<endl; //
+    	}
+    	while((pdirent = readdir(pdir)))
         {    
-            //if(pdirent->d_name[0]!='.')
+            if(pdirent->d_name[0]!='.')
             {
             	//strcpy(tp, pdirent->d_name);
             	//strcat(tp, "_Query");
             	//strcat(tp, argv[1]);
             	//ofstream fout(tp);
-           // 	ofstream fout(argv[2]);
 
-            	//fout<<pdirent->d_name<<" ";
+            	fout<<pdirent->d_name<<"\t";
           //  	fout<<23<<" Optimized Optimized"<<endl;
 
 				remove(RTFILE);			// remove file if exists
@@ -1061,14 +1067,14 @@ int main(int argc, char* argv[]) {
 //MODIFICATION BY RAN
 				vector<string> Ttable;
 				vector<float> Data;
-				//sprintf(temp, "%s/%s", path.c_str(), pdirent->d_name);
-				GetDataTable( Ttable, Data, "ge");
+				sprintf(temp, "%s/%s", path.c_str(), pdirent->d_name);
+				//GetDataTable( Ttable, Data, "ge");
+				GetDataTable( Ttable, Data, temp);
 				vector<lrvalue> MaxStreaks, LPSK;
-				int k = MakeMaximalStreaks(Data, 1, MaxStreaks, LPSK);
-				//data_size = MaxStreaks.size();
+				int k = MakeMaximalStreaks(Data, part, MaxStreaks, LPSK);
 				vector<lrvalue> overpruner = MakeOverPruner(LPSK, MaxStreaks, sim_degree, vmax, dmax);
             	data_size = MaxStreaks.size();
-
+/*
 				Entry** dataAry=new Entry*[data_size];
 
             	for (int i=0;i<data_size;i++) {
@@ -1084,6 +1090,7 @@ int main(int argc, char* argv[]) {
             		d->end=MaxStreaks[i].r;
             		dataAry[i]=d;            
             	}
+ */           	
 	//exit(0);
 
 	//write_dtfile(dtfile,dataAry,data_size);
@@ -1097,7 +1104,7 @@ int main(int argc, char* argv[]) {
 
             //for(part=0.6; part<1.1; part+=0.1)
             {
-            	part=0.8;
+            	//part=0.8;
             	remove(RTFILE);
 				Cache *c=new Cache(10000,blk_len);
 				RTree* rt=new RTree(RTFILE, blk_len,c,DIMENSION);
@@ -1121,7 +1128,7 @@ int main(int argc, char* argv[]) {
             	//fout<<topk_option<<" ";
           //  	fout<<part<<" ";
 
-            	t0=clock();
+
             	if(choice == 1)
             	{
 					if(opt<3)
@@ -1136,8 +1143,6 @@ int main(int argc, char* argv[]) {
 					else
 						RepeatInsertion(dataAry, data_size*( part - delta), rt);
 				}
-
-t1=clock();
 
 //Update Zone
 /*
@@ -1165,7 +1170,7 @@ t1=clock();
 */
 				
 				SortLPSk(LPSK);
-				t4=clock();
+				t0=clock();
 				for( int i=0; i<topk_option; i++)
 				{
 					Entry *ask = new Entry(DIMENSION, NULL);
@@ -1189,14 +1194,14 @@ t1=clock();
 						
 					delete ask;			
 				}
-				t3=clock();
+				t1=clock();
 				//f
-				cout<<1000*double(t3-t0)/CLOCKS_PER_SEC<<" "<<1000*double(t3-t2+t1-t0)/CLOCKS_PER_SEC<<" "<<1000*double(t3-t4)/CLOCKS_PER_SEC<<endl;
-
+				//cout<<1000*double(t3-t0)/CLOCKS_PER_SEC<<" "<<1000*double(t3-t2+t1-t0)/CLOCKS_PER_SEC<<" "<<1000*double(t3-t4)/CLOCKS_PER_SEC<<endl;
+				fout<<1000*double(t1-t0)/CLOCKS_PER_SEC<<"\t";
 //	
 				long tree_size = GetFileSize(RTFILE);
-				cout<<"Rtree size:  "<<tree_size<<";  overpruner:  "<<overpruner.size()<<endl;
-//				fout<<tree_size<<endl;
+//				cout<<"Rtree size:  "<<tree_size<<";  overpruner:  "<<overpruner.size()<<endl;
+				fout<<tree_size<<endl;
 
     			rt->load_root();	// just close them currently
 				rt->root_ptr->update_count();
@@ -1206,8 +1211,8 @@ t1=clock();
 			}
 	//		fout.close();
 			}
-		}
-		//fout.close(); //overview position
+		}//while
+		fout.close(); //overview position
 	}
 
 /*
